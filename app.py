@@ -14,6 +14,7 @@ def find_user():
 
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"  # keep-alive, like a real API
+    disable_nagle_algorithm = True  # headers and body go out as separate writes; don't let Nagle hold the body ~40 ms on Linux
 
     def do_GET(self):
         body = json.dumps({"user": find_user()}).encode()
