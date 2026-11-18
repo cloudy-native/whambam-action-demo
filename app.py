@@ -12,12 +12,20 @@ def find_user():
     return {"id": 42, "name": "Ada"}
 
 
+def find_team(user_id):
+    """Look up the user's team: one more round trip to the team service."""
+    time.sleep(0.012)
+    return {"team": "platform"}
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"  # keep-alive, like a real API
     disable_nagle_algorithm = True  # headers and body go out as separate writes; don't let Nagle hold the body ~40 ms on Linux
 
     def do_GET(self):
-        body = json.dumps({"user": find_user()}).encode()
+        user = find_user()
+        user.update(find_team(user["id"]))
+        body = json.dumps({"user": user}).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
