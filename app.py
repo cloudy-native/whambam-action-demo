@@ -17,7 +17,7 @@ class Handler(BaseHTTPRequestHandler):
     disable_nagle_algorithm = True  # headers and body go out as separate writes; don't let Nagle hold the body ~40 ms on Linux
 
     def do_GET(self):
-        body = json.dumps({"user": find_user()}).encode()
+        body = json.dumps({"user": find_user(), "api": "v1"}).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
