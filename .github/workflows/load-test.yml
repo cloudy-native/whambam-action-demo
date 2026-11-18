@@ -1,0 +1,42 @@
+name: load test
+
+# Every pull request is load-tested against main on the same runner:
+# whambam measures main first (the baseline), then the PR, and fails
+# the check if the PR's p99 latency is more than 25% worse.
+on: pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  load-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: pr
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: main
+
+      - name: Start main and this PR
+        run: |
+          python3 main/app.py 8001 &
+          python3 pr/app.py 8002 &
+          sleep 1
+
+      - name: Load test main (baseline)
+        uses: cloudy-native/whambam.dev@v1
+        with:
+          url: http://127.0.0.1:8001/
+          args: -z 20s -c 10 --qps 200
+          report: baseline.json
+
+      - name: Load test this PR
+        uses: cloudy-native/whambam.dev@v1
+        with:
+          url: http://127.0.0.1:8002/
+          args: -z 20s -c 10 --qps 200
+          baseline: baseline.json
+          assert: p99<+25%,errors<1%
